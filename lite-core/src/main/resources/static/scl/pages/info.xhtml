@@ -112,25 +112,7 @@ TT {
 				return (size/1024/1024/1024).toFixed(2)+"GB";
 			},
 			timestampToTime : function(timestamp) {
-				var date = new Date(timestamp);
-				var Y = date.getFullYear() + '-';
-				var M = (date.getMonth() + 1 < 10 ? '0' + (date.getMonth() + 1)
-						: date.getMonth() + 1)
-						+ '-';
-				var D = date.getDate() + ' ';
-				var h = date.getHours();
-				var m = date.getMinutes();
-				var s = date.getSeconds();
-				if(h < 10){
-					h = '0' + h;
-				}
-				if(m < 10){
-					m = '0' + m;
-				}
-				if(s < 10){
-					s = '0' + s;
-				}
-				return Y + M + D + h +':'+ m +':'+ s;
+				return timeformat(timestamp);
 			},
 			toMB : function(size){
 				return (size/1024/1024).toFixed(0)+"M";

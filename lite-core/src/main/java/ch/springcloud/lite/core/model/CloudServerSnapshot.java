@@ -14,5 +14,6 @@ public class CloudServerSnapshot {
 	volatile int priority;
 	boolean shutdown;
 	volatile int version;
+	volatile int qpslimit;
 
 }

@@ -26,7 +26,7 @@ import org.springframework.web.client.RestTemplate;
 import ch.springcloud.lite.core.client.ClientController;
 import ch.springcloud.lite.core.connector.DefaultRemoteServerConnector;
 import ch.springcloud.lite.core.connector.RemoteServerConnector;
-import ch.springcloud.lite.core.server.ClientRefreshListener;
+import ch.springcloud.lite.core.client.ClientRefreshListener;
 import ch.springcloud.lite.core.server.ServerRefreshListener;
 
 public class DefaultCloudClientAutoConfiguration {

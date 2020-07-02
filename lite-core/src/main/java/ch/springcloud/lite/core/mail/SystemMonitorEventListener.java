@@ -31,6 +31,9 @@ public class SystemMonitorEventListener {
 		MachineInfo info = (MachineInfo) event.getSource();
 		long duration = Integer.max(3, mailinfo.getDuration());
 		String account = mailinfo.getSender().getAccount();
+		if (account == null) {
+			return;
+		}
 		synchronized (infos) {
 			infos.add(info);
 			boolean hit = false;

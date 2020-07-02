@@ -10,6 +10,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.async.DeferredResult;
 
+import com.google.common.util.concurrent.RateLimiter;
+
+import ch.springcloud.lite.core.client.ClientRefreshListener;
 import ch.springcloud.lite.core.event.ServerRefreshEvent;
 import ch.springcloud.lite.core.model.AliveRequest;
 import ch.springcloud.lite.core.model.CloudClientMetadata;
@@ -29,6 +32,7 @@ public class ServerController {
 	public final static String HEARTBEAT = "/heart-beat";
 	public final static String CHANGEPRIORITY = "/changepriority";
 	public final static String CHANGERUNNING = "/changerunning";
+	public final static String CHANGEQPSLIMIT = "/changeqpslimit";
 
 	@Autowired
 	CloudServerMetaData metadata;
@@ -54,6 +58,8 @@ public class ServerController {
 	Lock serverReadLock;
 	@Autowired
 	Lock serverWriteLock;
+	@Autowired
+	RateLimiter limiter;
 
 	@GetMapping(MATADATA)
 	public CloudServerMetaData metadata() {
@@ -121,6 +127,19 @@ public class ServerController {
 		serverWriteLock.lock();
 		try {
 			metadata.setShutdown(shutdown);
+			metadata.setVersion(metadata.getVersion() + 1);
+			ctx.publishEvent(new ServerRefreshEvent(metadata));
+		} finally {
+			serverWriteLock.unlock();
+		}
+	}
+
+	@PostMapping(CHANGEQPSLIMIT)
+	public void changeqpslimit(int qps) {
+		serverWriteLock.lock();
+		try {
+			limiter.setRate(qps);
+			metadata.setQpslimit(qps);
 			metadata.setVersion(metadata.getVersion() + 1);
 			ctx.publishEvent(new ServerRefreshEvent(metadata));
 		} finally {

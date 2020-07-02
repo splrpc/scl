@@ -22,6 +22,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
+import com.google.common.util.concurrent.RateLimiter;
+
 import ch.springcloud.lite.core.anno.EnableCloudClient;
 import ch.springcloud.lite.core.anno.Stub;
 import ch.springcloud.lite.core.model.CloudMethod;
@@ -81,6 +83,11 @@ public class CloudServerBaseConguration {
 	}
 
 	@Bean
+	RateLimiter rateLimiter(CloudServerMetaData metedata) {
+		return RateLimiter.create(metedata.getPriority());
+	}
+
+	@Bean
 	CloudServerMetaData metaData(CloudServerProperties properties) {
 		CloudServerMetaData metaData = new CloudServerMetaData();
 		metaData.setServerid(UUID.randomUUID().toString());
@@ -103,6 +110,7 @@ public class CloudServerBaseConguration {
 			properties.setPriority(1);
 		}
 		metaData.setName(servername);
+		metaData.setQpslimit(properties.getQpslimit());
 		metaData.setPriority(properties.getPriority());
 		metaData.setServices(services);
 		metaData.setStartTime(System.currentTimeMillis());
@@ -110,6 +118,7 @@ public class CloudServerBaseConguration {
 	}
 
 	List<CloudService> exposedServices() {
+		AtomicInteger methodid = new AtomicInteger();
 		return Stream.of(app.getBeanDefinitionNames()).map(name -> {
 			Class<?> type = app.getType(name);
 			boolean isService = type.getAnnotation(Service.class) != null;
@@ -122,6 +131,7 @@ public class CloudServerBaseConguration {
 				List<CloudMethod> methods = Stream.of(type.getMethods()).filter(method -> method.getModifiers() == 1
 						&& !method.isBridge() && method.getDeclaringClass() != Object.class).map(method -> {
 							CloudMethod cloudMethod = new CloudMethod();
+							cloudMethod.setId(methodid.incrementAndGet());
 							cloudMethod.setName(method.getName());
 							List<CloudMethodParam> params = Stream.of(method.getParameters()).map(param -> {
 								CloudMethodParam methodParam = new CloudMethodParam();

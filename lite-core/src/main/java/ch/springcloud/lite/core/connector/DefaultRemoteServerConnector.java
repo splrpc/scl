@@ -25,6 +25,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import ch.springcloud.lite.core.client.ClientController;
 import ch.springcloud.lite.core.codec.CloudDecoder;
 import ch.springcloud.lite.core.event.ClientRefreshEvent;
+import ch.springcloud.lite.core.exception.RemoteInvokeException;
 import ch.springcloud.lite.core.model.AliveRequest;
 import ch.springcloud.lite.core.model.CloudClientMetadata;
 import ch.springcloud.lite.core.model.CloudClientSnapshot;
@@ -84,6 +85,9 @@ public class DefaultRemoteServerConnector implements RemoteServerConnector {
 		log.info("response {}", response);
 		if (response.getType() == VariantType.empty) {
 			return null;
+		}
+		if (response.isError()) {
+			throw new RemoteInvokeException(response.getErrormsg());
 		}
 		return decoder.decode(response.getVal(), type);
 	}

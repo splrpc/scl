@@ -8,6 +8,7 @@ import lombok.Data;
 @Data
 public class CloudMethod {
 
+	int id;
 	String name;
 	List<CloudMethodParam> params;
 	VariantType returnType;

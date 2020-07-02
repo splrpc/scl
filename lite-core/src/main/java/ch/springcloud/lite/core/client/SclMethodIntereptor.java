@@ -19,6 +19,7 @@ import org.springframework.util.StringUtils;
 
 import ch.springcloud.lite.core.codec.CloudEncoder;
 import ch.springcloud.lite.core.connector.RemoteServerConnector;
+import ch.springcloud.lite.core.exception.RemoteInvokeException;
 import ch.springcloud.lite.core.loadBalance.LoadBalance;
 import ch.springcloud.lite.core.model.CloudInvocation;
 import ch.springcloud.lite.core.model.CloudServer;
@@ -86,6 +87,9 @@ public class SclMethodIntereptor implements MethodInterceptor {
 			try {
 				return connector.invoke(remoteServer, request, returnType);
 			} catch (Throwable e) {
+				if (e instanceof RemoteInvokeException) {
+					throw e;
+				}
 				log.warn("connect error {}", e);
 			}
 		}
@@ -93,6 +97,9 @@ public class SclMethodIntereptor implements MethodInterceptor {
 			try {
 				return connector.invoke(remoteServer, request, returnType);
 			} catch (Throwable e) {
+				if (e instanceof RemoteInvokeException) {
+					throw e;
+				}
 				log.warn("connect error {}", e);
 			}
 		}

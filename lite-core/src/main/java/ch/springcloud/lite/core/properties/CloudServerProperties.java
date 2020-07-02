@@ -18,6 +18,8 @@ public class CloudServerProperties {
 
 	long alivetimeout = 60000L;
 
+	int qpslimit = 1000;
+
 	int priority;
-	
+
 }

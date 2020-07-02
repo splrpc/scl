@@ -1,180 +1,200 @@
 <!DOCTYPE html>
 <html>
-	<head>
-		<meta charset="UTF-8">
-		<!-- 引入样式 -->
-		<script src="https://cdn.bootcss.com/jquery/2.1.1/jquery.min.js"></script>
-		<link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
-		<style>
-			[v-cloak] {
-				display: none;
-			}
+<head>
+<meta charset="UTF-8">
+<!-- 引入样式 -->
+<script src="https://cdn.bootcss.com/jquery/2.1.1/jquery.min.js"></script>
+<link rel="stylesheet"
+	href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+<style>
+[v-cloak] {
+	display: none;
+}
 
-			body {
-				padding: 0;
-				margin: 0;
-				min-width: 1200px;
-			}
+body {
+	padding: 0;
+	margin: 0;
+	min-width: 1200px;
+}
 
-			.el-menu-vertical {
-				height: 100%;
-				min-height: 600px;
-			}
+.el-menu-vertical {
+	height: 100%;
+	min-height: 600px;
+}
 
-			.el-menu-vertical:not (.el-menu--collapse) {
-				display: inline-block;
-			}
+.el-menu-vertical:not (.el-menu--collapse ) {
+	display: inline-block;
+}
 
-			#page {
-				display: inline-block;
-			}
+#page {
+	display: inline-block;
+}
 
-			.cls {
-				position: absolute;
-				bottom: 0;
-			}
+.cls {
+	position: absolute;
+	bottom: 0;
+}
 
-			.cls:hover {
-				background-color: #545c64 !important;
-				color: #ffd04b !important;
-			}
+.cls:hover {
+	background-color: #545c64 !important;
+	color: #ffd04b !important;
+}
 
-			.menu {
-				float: left;
-			}
+.menu {
+	float: left;
+}
 
-			#page {
-				width: 100%;
-			}
-		</style>
-	</head>
-	<body>
-		<div id="app">
-			<div v-cloak>
-				<el-container style="height:100vh;border: 1px solid #eee;border:0;">
-					<el-aside :width="collapse?'65px':'201px'" style="height:100vh;min-height:600px;">
-						<el-menu default-active="1-1" class="el-menu-vertical" @open="handleOpen" @close="handleClose" background-color="#545c64"
-						 text-color="#fff" active-text-color="#ffd04b" :collapse="collapse">
-							<el-submenu index="1"> <template slot="title"> <i class="el-icon-share"></i> <span>云状态</span> </template>
-								<el-menu-item index="1-1" @click="glance">集群概览</el-menu-item>
-								<el-menu-item index="1-2" @click="self">本机状态</el-menu-item>
-							</el-submenu>
-							<el-submenu index="2">
-								<template slot="title"> <i class="el-icon-menu"></i> <span>云应用</span>
-								</template>
-								<el-menu-item index="2-1" @click="servermonitor">服务器监控</el-menu-item>
-							</el-submenu>
-							<el-menu-item index="3" @click="serverinfo"> <i class="el-icon-info"></i> <span slot="title">服务器</span>
-							</el-menu-item>
-							<el-menu-item @click="collapseMenu" class="cls"> <i v-if="collapse" class="el-icon-caret-right"></i> <i v-else
-								 class="el-icon-caret-left"></i> <span v-if="collapse" slot="title">展开导航</span>
-								<span v-else slot="title">折叠导航</span> </el-menu-item>
-						</el-menu>
-					</el-aside>
-					<el-container>
-						<el-main>
-							<div id="page"></div>
-						</el-main>
-					</el-container>
-				</el-container>
-			</div>
+#page {
+	width: 100%;
+}
+</style>
+</head>
+<body>
+	<div id="app">
+		<div v-cloak>
+			<el-container style="height:100vh;border: 1px solid #eee;border:0;">
+			<el-aside :width="collapse?'65px':'201px'"
+				style="height:100vh;min-height:600px;"> <el-menu
+				default-active="1-1" class="el-menu-vertical" @open="handleOpen"
+				@close="handleClose" background-color="#545c64" text-color="#fff"
+				active-text-color="#ffd04b" :collapse="collapse"> <el-submenu
+				index="1"> <template slot="title"> <i
+				class="el-icon-share"></i> <span>云状态</span> </template> <el-menu-item
+				index="1-1" @click="glance">集群概览</el-menu-item> <el-menu-item
+				index="1-2" @click="self">本机状态</el-menu-item> </el-submenu> <el-submenu index="2">
+			<template slot="title"> <i class="el-icon-menu"></i> <span>云应用</span>
+			</template> <el-menu-item index="2-1" @click="servermonitor">服务器监控</el-menu-item>
+			</el-submenu> <el-menu-item index="3" @click="serverinfo"> <i
+				class="el-icon-info"></i> <span slot="title">服务器</span> </el-menu-item> <el-menu-item
+				@click="collapseMenu" class="cls"> <i v-if="collapse"
+				class="el-icon-caret-right"></i> <i v-else
+				class="el-icon-caret-left"></i> <span v-if="collapse" slot="title">展开导航</span>
+			<span v-else slot="title">折叠导航</span> </el-menu-item> </el-menu> </el-aside> <el-container>
+			<el-main>
+			<div id="page"></div>
+			</el-main> </el-container> </el-container>
 		</div>
-	</body>
-	<!-- 先引入 Vue -->
-	<script src="https://unpkg.com/vue/dist/vue.js"></script>
-	<!-- 引入组件库 -->
-	<script src="https://unpkg.com/element-ui/lib/index.js"></script>
-	<script>
-		Vue.config.warnHandler = function(e) {
-			console.log(e)
-		}
-		var v = new Vue({
-			el: '#app',
-			data: {
-				wait: 5,
-				collapse: false,
-				visible: false,
-				version: null,
-				monitorlistener: null,
-				timetask: null
+	</div>
+</body>
+<!-- 先引入 Vue -->
+<script src="https://unpkg.com/vue/dist/vue.js"></script>
+<!-- 引入组件库 -->
+<script src="https://unpkg.com/element-ui/lib/index.js"></script>
+<script>
+	Vue.config.warnHandler = function(e) {
+		console.log(e)
+	}
+	var v = new Vue({
+		el : '#app',
+		data : {
+			wait : 5,
+			collapse : false,
+			visible : false,
+			version : null,
+			monitorlistener : null,
+			timetask : null
+		},
+		methods : {
+			servermonitor : function() {
+				this.loadPage("pages/monitor.xhtml");
 			},
-			methods: {
-				servermonitor: function() {
-					this.loadPage("pages/monitor.xhtml");
-				},
-				serverinfo: function() {
-					this.loadPage("pages/info.xhtml");
-				},
-				collapseMenu: function() {
-					this.collapse = !this.collapse;
-				},
-				glance: function() {
-					this.loadPage("pages/glance.xhtml");
-				},
-				self: function() {
-					this.loadPage("pages/self.xhtml");
-				},
-				loadPage: function(page) {
-					this.timetask = null
-					this.monitorlistener = null
-					$("#page").load(page);
-				},
-				monitor: function() {
-					$.ajax({
-						url: "/cloud-lite-client/heart-beat",
-						cache: false,
-						data: {
-							version: v.version
-						},
-						success: function(e) {
-							if (e == 'ClientOutmoded') {
-								if (v.monitorlistener) {
-									v.monitorlistener(e);
-								}
-								v.getMonitorVersion();
-							} else {
-								v.monitor();
+			serverinfo : function() {
+				this.loadPage("pages/info.xhtml");
+			},
+			collapseMenu : function() {
+				this.collapse = !this.collapse;
+			},
+			glance : function() {
+				this.loadPage("pages/glance.xhtml");
+			},
+			self : function() {
+				this.loadPage("pages/self.xhtml");
+			},
+			loadPage : function(page) {
+				this.timetask = null
+				this.monitorlistener = null
+				$("#page").load(page);
+			},
+			monitor : function() {
+				$.ajax({
+					url : "/cloud-lite-client/heart-beat",
+					cache : false,
+					data : {
+						version : v.version
+					},
+					success : function(e) {
+						if (e == 'ClientOutmoded') {
+							if (v.monitorlistener) {
+								v.monitorlistener(e);
 							}
-						},
-						error: function() {
-							setTimeout(function() {
-								v.monitor();
-							}, 5000);
-						}
-					})
-				},
-				timer: function() {
-					setInterval(function() {
-						try {
-							if (v.timetask != null) {
-								v.timetask();
-							}
-						} catch (e) {
-							console.log(e)
-						}
-					}, this.wait * 1000)
-				},
-				getMonitorVersion: function() {
-					$.ajax({
-						url: "/cloud-lite-client/monitor-version",
-						cache: false,
-						success: function(e) {
-							v.version = e;
+							v.getMonitorVersion();
+						} else {
 							v.monitor();
-						},
-						error: function() {
-							setTimeout(function() {
-								v.getMonitorVersion();
-							}, 5000);
 						}
-					})
-				}
+					},
+					error : function() {
+						setTimeout(function() {
+							v.monitor();
+						}, 5000);
+					}
+				})
+			},
+			timer : function() {
+				setInterval(function() {
+					try {
+						if (v.timetask != null) {
+							v.timetask();
+						}
+					} catch (e) {
+						console.log(e)
+					}
+				}, this.wait * 1000)
+			},
+			getMonitorVersion : function() {
+				$.ajax({
+					url : "/cloud-lite-client/monitor-version",
+					cache : false,
+					success : function(e) {
+						v.version = e;
+						v.monitor();
+					},
+					error : function() {
+						setTimeout(function() {
+							v.getMonitorVersion();
+						}, 5000);
+					}
+				})
 			}
-		})
-		$(function() {
-			v.glance();
-			v.getMonitorVersion();
-			v.timer()
-		})
-	</script>
+		}
+	})
+	$(function() {
+		v.glance();
+		v.getMonitorVersion();
+		v.timer()
+	})
+	function timeformat(timestamp) {
+		var date = new Date(timestamp);
+		var Y = date.getFullYear() + '-';
+		var M = (date.getMonth() + 1 < 10 ? '0' + (date.getMonth() + 1) : date
+				.getMonth() + 1)
+				+ '-';
+		var D = date.getDate();
+		var h = date.getHours();
+		var m = date.getMinutes();
+		var s = date.getSeconds();
+		if (D < 10) {
+			D = '0' + D
+		}
+		if (h < 10) {
+			h = '0' + h;
+		}
+		if (m < 10) {
+			m = '0' + m;
+		}
+		if (s < 10) {
+			s = '0' + s;
+		}
+		return Y + M + D + " " + h + ':' + m + ':' + s;
+	}
+</script>
 </html>

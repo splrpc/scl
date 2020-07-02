@@ -11,6 +11,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.web.context.request.async.DeferredResult;
 
+import com.google.common.util.concurrent.RateLimiter;
+
 import ch.springcloud.lite.core.codec.CloudDecoder;
 import ch.springcloud.lite.core.codec.CloudEncoder;
 import ch.springcloud.lite.core.model.CloudMethodParam;
@@ -32,6 +34,8 @@ public class DefaultRemoteRequestHandler implements RemoteRequestHandler {
 	CloudDecoder decoder;
 	@Autowired
 	CloudEncoder encoder;
+	@Autowired
+	RateLimiter limiter;
 
 	Map<Class<?>, Map<List<VariantType>, Method>> methods = new ConcurrentHashMap<>();
 
@@ -58,6 +62,9 @@ public class DefaultRemoteRequestHandler implements RemoteRequestHandler {
 	private RemoteResponse exec(RemoteRequest request) throws Exception {
 		if (!exposed(request)) {
 			return error("No such service!");
+		}
+		if (!limiter.tryAcquire()) {
+			return error("QPS Limit!");
 		}
 		Object service = ctx.getBean(request.getService());
 		if (service == null) {

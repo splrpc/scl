@@ -9,7 +9,7 @@ import java.lang.annotation.Target;
 import org.springframework.core.annotation.AliasFor;
 
 import ch.springcloud.lite.core.loadBalance.LoadBalance;
-import ch.springcloud.lite.core.loadBalance.RandomLoadBalance;
+import ch.springcloud.lite.core.loadBalance.RoundRobinLoadBalance;
 
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
@@ -27,6 +27,6 @@ public @interface Remote {
 
 	int timeout() default -1;
 
-	Class<? extends LoadBalance> loadBalance() default RandomLoadBalance.class;
+	Class<? extends LoadBalance> loadBalance() default RoundRobinLoadBalance.class;
 
 }

@@ -23,7 +23,6 @@ public class ServerRefreshListener {
 
 	@EventListener(classes = ServerRefreshEvent.class)
 	public void handle(ServerRefreshEvent event) {
-		System.out.println(event);
 		CloudServerMetaData metaData = (CloudServerMetaData) event.getSource();
 		map.forEach((key, value) -> {
 			if (!key.isSetOrExpired()) {

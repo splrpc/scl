@@ -22,7 +22,6 @@ import ch.springcloud.lite.core.model.CloudClientSnapshot;
 import ch.springcloud.lite.core.model.CloudServerMetaData;
 import ch.springcloud.lite.core.model.CloudServerSnapshot;
 import ch.springcloud.lite.core.model.MachineInfo;
-import ch.springcloud.lite.core.server.ClientRefreshListener;
 import ch.springcloud.lite.core.type.AliveStatus;
 
 @RestController(ClientController.CLIENTCONTROLLER)
@@ -116,13 +115,11 @@ public class ClientController {
 
 	@PutMapping(ADDREMOTE)
 	public void addremote(String url) {
-		System.out.println("ADDREMOTE:"+url);
 		connector.addRemote(url);
 	}
 
 	@PutMapping(ATTACH)
 	public void attach(@RequestBody CloudServerSnapshot remote) throws IOException {
-		System.out.println("ATTACH:"+remote);
 		connector.attach(remote);
 	}
 
