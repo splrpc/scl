@@ -42,6 +42,7 @@ public class CloudServerMetaData extends CloudServerSnapshot {
 		copy.snapshot = snapshot;
 		copy.serverid = serverid;
 		copy.priority = priority;
+		copy.qpslimit = qpslimit;
 		return copy;
 	}
 

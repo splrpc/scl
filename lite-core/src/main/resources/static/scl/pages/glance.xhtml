@@ -41,7 +41,9 @@ h1 {
 			<span v-for="ip,ipidx in server.hosts"><b>Host{{ipidx+1}}</b>:
 				<a target="_blank" class="tmachine"
 				:href="'http://' + ip + ':' + server.port + '/scl/index.html'">{{ip}}</a>
-				<br></span> <span><b>Port</b>:{{server.port}}<br></span> <b>Priority</b>:{{server.priority}}<br>
+				<br></span> <span><b>Port</b>:{{server.port}}<br></span> 
+				<b>QPSLimit</b>:{{server.qpslimit}}<br>
+				<b>Priority</b>:{{server.priority}}<br>
 			<b>Running</b>:{{!server.shutdown}} <br>
 			<b>Services</b>:<br>
 			<span v-for="service,sx in server.services"><span
