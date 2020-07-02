@@ -1,0 +1,143 @@
+<style>
+.error {
+	margin-top: 200px;
+	width: 300px;
+	margin-left: calc(50% - 150px);
+}
+
+h1 {
+	text-align: center;
+}
+
+.status {
+	margin-top: 30px;
+	margin-left: 50px;
+}
+
+TT {
+	text-align: center;
+}
+</style>
+<div id="self" v-cloak>
+	<div v-if="snapshot">
+		<h1>本机状态</h1>
+		<div class="TT" v-if="snapshot.self==null">
+			<el-alert class="error" title="本机仅为客户端" type="error"
+				:closable='false' description="只有服务端可查看状态,请进行其他操作!" show-icon>
+			</el-alert>
+		</div>
+		<div v-else class="status">
+			<el-form ref="form" label-width="100px" label-position="left"
+				size="medium"> <el-form-item label="服务名">
+			{{snapshot.self.name}} </el-form-item> <el-form-item label="服务ID">
+			{{snapshot.self.serverid}} </el-form-item> <el-form-item label="服务IP">
+			<span v-for="host,idx in snapshot.self.hosts"> {{host}}<span
+				v-if="idx < snapshot.self.hosts.length-1">、</span>
+			</span> </el-form-item> <el-form-item label="端口"> {{snapshot.self.port}} </el-form-item> <el-form-item
+				label='运行状态'> <el-switch v-model="running"
+				@change="changerunning" active-color="#13ce66"
+				inactive-color="#ff4949"> </el-switch> </el-form-item> 
+				<el-form-item label="优先级">
+			<el-slider @change="changepriority" v-model="snapshot.self.priority"
+				:min='min' :max='max' style="width:500px;" show-input> </el-slider>
+			</el-form-item> 
+			<el-form-item label="所有服务"> <el-tree
+				:data="snapshot.self.services" :props="defaultProps"
+				@node-click="handleNodeClick"> </el-tree> </el-form-item> </el-form>
+		</div>
+	</div>
+</div>
+<script>
+	var self = new Vue({
+		el : "#self",
+		data : {
+			snapshot : null,
+			min : 1,
+			max : 1000,
+			running : null,
+			defaultProps : {
+				children : function(data, node) {
+					if (data.methods) {
+						return data.methods;
+					} else if (data.params) {
+						return data.params;
+					} else {
+						return data;
+					}
+				},
+				label : function(data, node) {
+					if (data.methods) {
+						return data.name;
+					} else if (data.params) {
+						return 'Method: ' + data.name;
+					} else {
+						return 'Param: (' + data.type + ")" + data.name;
+					}
+				}
+			}
+		},
+		methods : {
+			handleNodeClick : function(data) {
+				console.log(data);
+			},
+			loadServers : function() {
+				$.ajax({
+					url : "/cloud-lite-client/snapshot",
+					cache : false,
+					success : function(e) {
+						self.snapshot = e;
+						self.running = !e.self.shutdown
+					}
+				})
+			},
+			changepriority : function(priority) {
+				$.ajax({
+					method : "post",
+					url : "/cloud-lite-server/changepriority",
+					data : {
+						priority : priority
+					},
+					cache : false,
+					success : function(e) {
+						self.$notify.success({
+							title : '成功',
+							message : '修改成功!'
+						});
+					},
+					error : function(e) {
+						self.$notify.error({
+							title : '错误',
+							message : '发生' + e.status + '错误!'
+						});
+					}
+				})
+			},
+			changerunning : function() {
+				$.ajax({
+					method : "post",
+					url : "/cloud-lite-server/changerunning",
+					data : {
+						shutdown : !self.running
+					},
+					cache : false,
+					success : function(e) {
+						self.$notify.success({
+							title : '成功',
+							message : '修改成功!'
+						});
+					},
+					error : function(e) {
+						self.$notify.error({
+							title : '错误',
+							message : '发生' + e.status + '错误!'
+						});
+					}
+				})
+			}
+		}
+	});
+	v.monitorlistener = function() {
+		self.loadServers();
+	}
+	self.loadServers();
+</script>

@@ -1,0 +1,170 @@
+<style>
+.error {
+	margin-top: 200px;
+	width: 300px;
+	margin-left: calc(50% - 150px);
+}
+
+h1 {
+	text-align: center;
+}
+
+.status {
+	margin-top: 30px;
+	margin-left: 50px;
+}
+
+TT {
+	text-align: center;
+}
+
+.bar, .danger-bar, .warning-bar {
+	margin-top: 10px;
+	width: 500px;
+}
+
+.bar .el-progress-bar__inner {
+	background-color: #67C23A;
+}
+
+.danger-bar .el-progress-bar__inner {
+	background-color: #F56C6C;
+}
+
+.warning-bar .el-progress-bar__inner {
+	background-color: #E6A23C;
+}
+</style>
+<div id="info" v-cloak>
+	<div v-if="machine">
+		<h1>服务器信息</h1>
+		<div class="status">
+			<el-form ref="form" label-width="100px" label-position="left"
+				size="medium"> <el-form-item label="系统">
+			{{machine.name}} </el-form-item> <el-form-item label="CPU">
+			{{machine.cpu.core}}核 </el-form-item> <el-form-item label="CPU使用率"> <el-progress
+				:percentage="(machine.cpu.userate*100).toFixed(0)"
+				:class="type(machine.cpu.userate)"></el-progress> </el-form-item> <el-form-item
+				label="JVM堆内存"> <el-tooltip placement="bottom"
+				effect="light">
+			<div slot="content">
+				初始内存: {{toMB(machine.heap.init)}}<br> 使用内存:
+					{{toMB(machine.heap.used)}} 
+				<br> 最大内存: {{toMB(machine.heap.total)}} 
+			</div>
+			<el-progress
+				:percentage="(machine.heap.used/machine.heap.total*100).toFixed(0)"
+				:class="type(machine.heap.used/machine.heap.total)"></el-progress> </el-tooltip>
+			</el-form-item> <el-form-item label="系统内存"> <el-tooltip
+				placement="bottom" effect="light">
+			<div slot="content">
+				使用内存: {{toGB(machine.memory.used)}}<br> 最大内存:
+					{{toGB(machine.memory.total)}} 
+			</div>
+			<el-progress
+				:percentage="(machine.memory.used/machine.memory.total*100).toFixed(0)"
+				:class="type(machine.memory.used/machine.memory.total)"></el-progress>
+			</el-tooltip> </el-form-item> <el-form-item v-for="disk in machine.disks"
+				:label="'磁盘-'+disk.path"> <el-tooltip
+				placement="bottom" effect="light">
+			<div slot="content">
+				使用空间: {{toGB(disk.used)}}<br> 最大空间: {{toGB(disk.total)}} 
+			</div>
+			<el-progress :percentage="(disk.used/disk.total*100).toFixed(0)"
+				:class="type(disk.used/disk.total)"></el-progress> </el-tooltip> </el-form-item> <el-form-item
+				label="刷新时间"> {{timestampToTime(machine.freshTime)}}
+			</el-form-item> </el-form>
+		</div>
+	</div>
+</div>
+<script>
+	var info = new Vue({
+		el : "#info",
+		data : {
+			machine : null,
+			snapshot : null,
+			min : 1,
+			max : 1000,
+			running : null,
+			defaultProps : {
+				children : function(data, node) {
+					if (data.methods) {
+						return data.methods;
+					} else if (data.params) {
+						return data.params;
+					} else {
+						return data;
+					}
+				},
+				label : function(data, node) {
+					if (data.methods) {
+						return data.name;
+					} else if (data.params) {
+						return 'Method: ' + data.name;
+					} else {
+						return 'Param: (' + data.type + ")" + data.name;
+					}
+				}
+			}
+		},
+		methods : {
+			toGB : function(size){
+				return (size/1024/1024/1024).toFixed(2)+"GB";
+			},
+			timestampToTime : function(timestamp) {
+				var date = new Date(timestamp);
+				var Y = date.getFullYear() + '-';
+				var M = (date.getMonth() + 1 < 10 ? '0' + (date.getMonth() + 1)
+						: date.getMonth() + 1)
+						+ '-';
+				var D = date.getDate() + ' ';
+				var h = date.getHours();
+				var m = date.getMinutes();
+				var s = date.getSeconds();
+				if(h < 10){
+					h = '0' + h;
+				}
+				if(m < 10){
+					m = '0' + m;
+				}
+				if(s < 10){
+					s = '0' + s;
+				}
+				return Y + M + D + h +':'+ m +':'+ s;
+			},
+			toMB : function(size){
+				return (size/1024/1024).toFixed(0)+"M";
+			},
+			type : function(rate) {
+				if (rate > 0.9) {
+					return 'danger-bar';
+				} else if (rate > 0.7) {
+					return 'warning-bar';
+				}
+				return 'bar';
+			},
+			handleNodeClick : function(data) {
+				console.log(data);
+			},
+			getInfo : function() {
+				$.ajax({
+					url : "/cloud-lite-client/machine-info",
+					cache : false,
+					success : function(e) {
+						info.machine = e;
+					},
+					error : function() {
+						info.$message.error('加载失败,请重试!');
+						setTimeout(function() {
+							v.serverinfo();
+						}, 3000);
+					}
+				})
+			}
+		}
+	});
+	info.getInfo();
+	v.timetask = function(){
+		info.getInfo();
+	}
+</script>

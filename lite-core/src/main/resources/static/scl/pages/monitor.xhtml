@@ -1,0 +1,154 @@
+<style>
+	.error {
+	margin-top: 200px;
+	width: 300px;
+	margin-left: calc(50% - 150px);
+}
+
+h1 {
+	text-align: center;
+}
+
+.status {
+	margin-top: 30px;
+	margin-left: 50px;
+}
+
+TT {
+	text-align: center;
+}
+
+.bar, .danger-bar, .warning-bar {
+	margin-top: 10px;
+	width: 500px;
+}
+
+.bar .el-progress-bar__inner {
+	background-color: #67C23A;
+}
+
+.danger-bar .el-progress-bar__inner {
+	background-color: #F56C6C;
+}
+
+.warning-bar .el-progress-bar__inner {
+	background-color: #E6A23C;
+}
+
+</style>
+<div id="info" v-cloak>
+	<div>
+		<h1>服务器监控</h1>
+		<div class="status" v-if="email">
+			<el-form label-width="100px" label-position="left" size="medium" v-loading="loading" element-loading-text="邮件正在发送中">
+				<el-form-item label="SMTPHost">
+					<el-input @change="changevalue" style="width:400px" v-model="email.sender.smtphost" placeholder="smtp.xxx.com"></el-input>
+				</el-form-item>
+				<el-form-item label="发件人名">
+					<el-input @change="changevalue" style="width:400px" v-model="email.sender.nickname" placeholder="发件人昵称"></el-input>
+				</el-form-item>
+				<el-form-item label="邮箱账户">
+					<el-input @change="changevalue" style="width:400px" v-model="email.sender.account" placeholder="发件人邮箱"></el-input>
+				</el-form-item>
+				<el-form-item label="邮箱密码">
+					<el-input @change="changevalue" style="width:400px" v-model="email.sender.password" placeholder="发件人邮箱密码"></el-input>
+				</el-form-item>
+				<el-form-item label="收件人名">
+					<el-input @change="changevalue" style="width:400px" v-model="email.receiver.nickname" placeholder="收件人昵称"></el-input>
+				</el-form-item>
+				<el-form-item label="收件地址">
+					<el-input @change="changevalue" style="width:400px" v-model="email.receiver.address" placeholder="收件人地址"></el-input>
+				</el-form-item>
+				<el-form-item label="CPU预警值">
+					<el-slider v-model="email.cpuratio" @change="changevalue" :min='min' :max='max' style="width:500px;" show-input>
+					</el-slider>
+				</el-form-item>
+				<el-form-item label="内存预警值">
+					<el-slider v-model="email.memoryratio" @change="changevalue" :min='min' :max='max' style="width:500px;" show-input>
+					</el-slider>
+				</el-form-item>
+				<el-form-item label="采样时间段">
+					<el-slider v-model="email.duration" @change="changevalue" :min='min3' :max='max20' style="width:500px;" show-input>
+					</el-slider>
+				</el-form-item>
+				<el-form-item label="监控状态">
+					<el-switch v-model="email.open" @change="changevalue" active-color="#13ce66" inactive-color="#ff4949"> </el-switch>
+					<el-button v-if="email.open" @click="sendtest" style="margin-left:20px" size="mini" type="primary" round>发送测试邮件</el-button>
+				</el-form-item>
+			</el-form>
+		</div>
+	</div>
+</div>
+<script>
+	var monitor = new Vue({
+		el: "#info",
+		data: {
+			min3 : 3,
+			max20 : 20,
+			min: 10,
+			max: 100,
+			email: null,
+			loading: false
+		},
+		methods: {
+			sendtest: function() {
+				this.loading = true;
+				$.ajax({
+					method: "put",
+					url: "/spring-cloud-lite-monitor/send-test-email",
+					cache: false,
+					success: function() {
+						monitor.$message.success('发送成功');
+					},
+					error: function() {
+						monitor.$message.error('发送失败!');
+					},
+					complete: function() {
+						monitor.loading = false
+					}
+				})
+			},
+			changevalue: function() {
+				$.ajax({
+					url: "/spring-cloud-lite-monitor/change-value",
+					data: JSON.stringify(monitor.email),
+					cache: false,
+					dataType: "json",
+					headers: {
+						'Content-Type': 'application/json'
+					},
+					method: "post",
+					success: function() {
+						monitor.$notify.success({
+							title: '成功',
+							message: '字段修改成功!'
+						});
+					},
+					error: function(e) {
+						monitor.$notify.error({
+							title: '错误',
+							message: '发生' + e.status + '错误!'
+						});
+					}
+				})
+			},
+			getMail: function() {
+				$.ajax({
+					url: "/spring-cloud-lite-monitor/email-info",
+					cache: false,
+					success: function(e) {
+						monitor.email = e
+					},
+					error: function() {
+						monitor.$notify.error({
+							title: '错误',
+							message: '发生' + e.status + '错误!'
+						});
+						v.servermonitor();
+					}
+				})
+			}
+		}
+	});
+	monitor.getMail();
+</script>

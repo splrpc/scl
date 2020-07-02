@@ -1,0 +1,130 @@
+<style>
+.servers button {
+	margin: 5px 10px;
+}
+
+h1 {
+	text-align: center;
+}
+
+.servers {
+	max-height: 600px;
+}
+
+.server {
+	min-width: 120px;
+}
+
+.subtitle {
+	text-align: center;
+}
+
+.bottom {
+	margin-top: 50px;
+	text-align: center;
+}
+
+.tmachine, .tmachine:visited {
+	color: blue;
+	text-decoration: none;
+}
+</style>
+<div id="glance" v-cloak>
+	<h1>集群信息</h1>
+	<div class='subtitle' v-if="cluster">
+		共有{{cluster.servers.length}}个服务节点</div>
+	<div v-if="cluster" class="servers"
+		style="text-align: center; margin-top: 30px;">
+		<el-tooltip class="item" v-for="server,idx in cluster.servers"
+			effect="light" placement="bottom-start">
+		<div slot="content" style="max-width: 140px; word-break: break-all;">
+			<span v-for="ip,ipidx in server.hosts"><b>Host{{ipidx+1}}</b>:
+				<a target="_blank" class="tmachine"
+				:href="'http://' + ip + ':' + server.port + '/scl/index.html'">{{ip}}</a>
+				<br></span> <span><b>Port</b>:{{server.port}}<br></span> <b>Priority</b>:{{server.priority}}<br>
+			<b>Running</b>:{{!server.shutdown}} <br>
+			<b>Services</b>:<br>
+			<span v-for="service,sx in server.services"><span
+				v-if="sx < 5">· {{service.name}}<br></span> </span> <span
+				v-if="server.services.length>5">· Other
+				{{server.services.length-5}}s..<br>
+			</span> <b>ServerId</b>:<br>{{server.serverid}} 
+			<br>
+			<b>StartTime</b>:<br>{{timestampToTime(server.startTime)}} 
+		</div>
+		<el-button class="server" :type="server.shutdown?'danger':'success'"
+			plain> <span v-if="server.name">{{server.name}}</span> <span
+			v-else>Server {{server.serverid.substr(0,8).toUpperCase()}}</span> <el-progress
+			style="margin-top:5px;" :percentage="server.priority/10"
+			:show-text="false"></el-progress> </el-button> </el-tooltip>
+	</div>
+	<div class="bottom">
+		<el-button type="primary" @click="addnode" icon="el-icon-plus" round>添加节点</el-button>
+	</div>
+</div>
+<script>
+	var glance = new Vue({
+		el : "#glance",
+		data : {
+			cluster : null
+		},
+		methods : {
+			loadServers : function() {
+				$.ajax({
+					url : "/cloud-lite-client/client-info",
+					cache : false,
+					success : function(e) {
+						glance.cluster = e;
+					}
+				})
+			},
+			addnode : function(){
+		        this.$prompt('请输入节点地址', '新节点', {
+		            confirmButtonText: '添加',
+		            cancelButtonText: '取消',
+		            inputPlaceholder: 'IP地址:端口号',
+		            inputPattern: /\w+:\d{1,5}/,
+		            inputErrorMessage: '格式错误'
+		          }).then(({ value }) => {
+		        	$.ajax({
+		        		url : "/cloud-lite-client/add-remote",
+		        		data : {
+		        			url : value
+		        		},
+		        		cache : false,
+		        		method : "put",
+		        		success: function(){
+		        			glance.loadServers();
+		        			glance.$message.success('添加成功!');
+		        		},
+		        		error : function(e){
+		        			glance.$message.error('添加失败: 错误码' + e.status);
+		        		}
+		        	})
+		          }).catch(() => {
+		             
+		          });
+			},
+			timestampToTime : function(timestamp) {
+				var date = new Date(timestamp);
+				var Y = date.getFullYear() + '-';
+				var M = (date.getMonth() + 1 < 10 ? '0' + (date.getMonth() + 1)
+						: date.getMonth() + 1)
+						+ '-';
+				var D = date.getDate() + ' ';
+				var h = date.getHours() + ':';
+				var m = date.getMinutes() + ':';
+				var s = date.getSeconds();
+				return Y + M + D + h + m + s;
+			}
+		}
+	});
+	v.monitorlistener = function(){
+		glance.$notify.info({
+			title : '消息',
+			message : '集群状态发生变化!'
+		});
+		glance.loadServers();
+	}
+	glance.loadServers();
+</script>
