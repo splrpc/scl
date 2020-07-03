@@ -4,6 +4,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.springframework.stereotype.Service;
 
@@ -14,7 +15,7 @@ import ch.springcloud.lite.core.properties.CloudServerProperties;
 @Service
 public class MyService {
 
-	@Remote(name = "newService2",  timeout = 1000, loadBalance = RoundRobinLoadBalance.class)
+	@Remote(name = "newService2", timeout = 1000, loadBalance = RoundRobinLoadBalance.class)
 	NewService newService;
 
 	public Date name(String name, int num, CloudServerProperties properties, Map<String, String> hash, Set<String> set,
@@ -22,8 +23,12 @@ public class MyService {
 		return new Date();
 	}
 
+	AtomicInteger id = new AtomicInteger();
+
 	public Object call() {
-		return newService.call(1);
+		int tid = id.getAndIncrement();
+		System.out.println(tid);
+		return newService.call(tid);
 	}
 
 }

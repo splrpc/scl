@@ -53,6 +53,7 @@ public class DefaultRemoteRequestHandler implements RemoteRequestHandler {
 					String errormsg = e.getClass() + ":" + e.getMessage();
 					RemoteResponse response = error(errormsg);
 					result.setResult(response);
+					e.printStackTrace();
 				}
 			}
 		};

@@ -1,5 +1,7 @@
 package ch.examples.service;
 
+import javax.transaction.Transactional;
+
 import org.springframework.stereotype.Service;
 
 import ch.springcloud.lite.core.anno.Remote;
@@ -13,6 +15,7 @@ public class StubService implements NewService {
 	NewService newService2;
 
 	@Override
+	@Transactional
 	public Result call(int i) {
 		System.out.println("STUB !");
 		return newService2.call(2);

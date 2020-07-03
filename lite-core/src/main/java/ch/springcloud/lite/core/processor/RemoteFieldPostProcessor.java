@@ -13,7 +13,9 @@ import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.cglib.proxy.Enhancer;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
+import org.springframework.core.PriorityOrdered;
 import org.springframework.core.annotation.AnnotationUtils;
+import org.springframework.util.ClassUtils;
 import org.springframework.util.StringUtils;
 
 import ch.springcloud.lite.core.anno.Remote;
@@ -22,7 +24,7 @@ import ch.springcloud.lite.core.client.SclMethodIntereptor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class RemoteFieldPostProcessor implements BeanPostProcessor, ApplicationContextAware {
+public class RemoteFieldPostProcessor implements BeanPostProcessor, ApplicationContextAware, PriorityOrdered {
 
 	ApplicationContext ctx;
 
@@ -30,7 +32,7 @@ public class RemoteFieldPostProcessor implements BeanPostProcessor, ApplicationC
 
 	@Override
 	public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
-		Class<?> type = bean.getClass();
+		Class<?> type = ClassUtils.getUserClass(bean.getClass());
 		findRemoteFields(type).forEach((field, remote) -> {
 			Object stub = getStubBean(type, field, remote);
 			Object remoteBean = stub == null ? getRemoteBean(field, remote) : stub;
@@ -42,6 +44,16 @@ public class RemoteFieldPostProcessor implements BeanPostProcessor, ApplicationC
 				throw new IllegalArgumentException(e);
 			}
 		});
+		Field[] fields = type.getDeclaredFields();
+		if (findRemoteFields(type).size() > 0)
+			for (Field field : fields) {
+				try {
+					field.setAccessible(true);
+					log.info(field.getDeclaringClass() + ":" + field + ":" + field.get(bean) + ":" + bean.hashCode());
+				} catch (IllegalArgumentException | IllegalAccessException e) {
+					e.printStackTrace();
+				}
+			}
 		return BeanPostProcessor.super.postProcessAfterInitialization(bean, beanName);
 	}
 
@@ -51,7 +63,7 @@ public class RemoteFieldPostProcessor implements BeanPostProcessor, ApplicationC
 		List<String> rkeys = new ArrayList<>();
 		for (String key : beansOfType.keySet()) {
 			Object bean = beansOfType.get(key);
-			Class<? extends Object> cls = bean.getClass();
+			Class<? extends Object> cls = ClassUtils.getUserClass(bean.getClass());
 			if (!cls.isAnnotationPresent(Stub.class) || cls == type) {
 				rkeys.add(key);
 			}
@@ -72,7 +84,7 @@ public class RemoteFieldPostProcessor implements BeanPostProcessor, ApplicationC
 		List<Object> beans = new ArrayList<>();
 		for (Entry<String, ?> entry : beansOfType.entrySet()) {
 			Object bean = entry.getValue();
-			Class<? extends Object> cls = bean.getClass();
+			Class<? extends Object> cls = ClassUtils.getUserClass(bean.getClass());
 			Stub[] annotationsByType = cls.getAnnotationsByType(Stub.class);
 			for (Stub stub : annotationsByType) {
 				if (stub.name().equals(name) || stub.value().equals(name)) {
@@ -144,6 +156,11 @@ public class RemoteFieldPostProcessor implements BeanPostProcessor, ApplicationC
 	@Override
 	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
 		this.ctx = applicationContext;
+	}
+
+	@Override
+	public int getOrder() {
+		return Integer.MIN_VALUE;
 	}
 
 }

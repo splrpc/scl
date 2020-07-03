@@ -17,5 +17,10 @@ public class MyController {
 		System.out.println(object.getClass());
 		return object;
 	}
+	
+	@GetMapping("/time")
+	public long time() {
+		return System.currentTimeMillis();
+	}
 
 }

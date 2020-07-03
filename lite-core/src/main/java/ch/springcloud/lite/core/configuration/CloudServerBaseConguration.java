@@ -21,6 +21,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ClassUtils;
 
 import com.google.common.util.concurrent.RateLimiter;
 
@@ -121,8 +122,9 @@ public class CloudServerBaseConguration {
 		AtomicInteger methodid = new AtomicInteger();
 		return Stream.of(app.getBeanDefinitionNames()).map(name -> {
 			Class<?> type = app.getType(name);
-			boolean isService = type.getAnnotation(Service.class) != null;
-			boolean isStub = type.getAnnotation(Stub.class) != null;
+			type = ClassUtils.getUserClass(type);
+			boolean isService = type.isAnnotationPresent(Service.class);
+			boolean isStub = type.isAnnotationPresent(Stub.class);
 			if (!isService || isStub) {
 				return null;
 			} else {
