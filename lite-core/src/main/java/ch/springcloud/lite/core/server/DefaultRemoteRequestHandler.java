@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 
+import org.checkerframework.checker.units.qual.s;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.web.context.request.async.DeferredResult;
@@ -15,8 +16,11 @@ import com.google.common.util.concurrent.RateLimiter;
 
 import ch.springcloud.lite.core.codec.CloudDecoder;
 import ch.springcloud.lite.core.codec.CloudEncoder;
+import ch.springcloud.lite.core.model.CloudMethod;
 import ch.springcloud.lite.core.model.CloudMethodParam;
 import ch.springcloud.lite.core.model.CloudServerMetaData;
+import ch.springcloud.lite.core.model.CloudService;
+import ch.springcloud.lite.core.model.MockMethod;
 import ch.springcloud.lite.core.model.RemoteRequest;
 import ch.springcloud.lite.core.model.RemoteResponse;
 import ch.springcloud.lite.core.type.VariantType;
@@ -36,6 +40,8 @@ public class DefaultRemoteRequestHandler implements RemoteRequestHandler {
 	CloudEncoder encoder;
 	@Autowired
 	RateLimiter limiter;
+	@Autowired
+	MockMethodRepository mockMethodRepository;
 
 	Map<Class<?>, Map<List<VariantType>, Method>> methods = new ConcurrentHashMap<>();
 
@@ -61,11 +67,9 @@ public class DefaultRemoteRequestHandler implements RemoteRequestHandler {
 	}
 
 	private RemoteResponse exec(RemoteRequest request) throws Exception {
-		if (!exposed(request)) {
+		CloudMethod exposedMethod = exposedMethod(request);
+		if (exposedMethod == null) {
 			return error("No such service!");
-		}
-		if (!limiter.tryAcquire()) {
-			return error("QPS Limit!");
 		}
 		Object service = ctx.getBean(request.getService());
 		if (service == null) {
@@ -81,6 +85,14 @@ public class DefaultRemoteRequestHandler implements RemoteRequestHandler {
 		for (int i = 0; i < args.length; i++) {
 			args[i] = decoder.decode(request.getParams()[i], parameterTypes[i]);
 		}
+		if (!limiter.tryAcquire()) {
+			MockMethod mockmethod = mockMethodRepository.findOne(exposedMethod.getId());
+			if (mockmethod == null) {
+				return error("QPS Limit!");
+			} else {
+				method = mockmethod.getMockMethod();
+			}
+		}
 		Object returnVal = method.invoke(service, args);
 		RemoteResponse response = new RemoteResponse();
 		VariantType rType = CloudUtils.mapType(returnVal.getClass());
@@ -89,24 +101,25 @@ public class DefaultRemoteRequestHandler implements RemoteRequestHandler {
 		return response;
 	}
 
-	private boolean exposed(RemoteRequest request) {
-		return metadata.getServices().stream().anyMatch(service -> {
+	private CloudMethod exposedMethod(RemoteRequest request) {
+		for (CloudService service : metadata.getServices()) {
 			if (!service.getName().equals(request.getService())) {
-				return false;
+				continue;
 			}
-			return service.getMethods().stream().anyMatch(method -> {
+			F2: for (CloudMethod method : service.getMethods()) {
 				if (!method.getName().equals(request.getMethod())) {
-					return false;
+					continue;
 				}
 				for (int i = 0; i < method.getParams().size(); i++) {
 					CloudMethodParam param = method.getParams().get(i);
 					if (param.getType() != request.getTypes()[i]) {
-						return false;
+						continue F2;
 					}
 				}
-				return true;
-			});
-		});
+				return method;
+			}
+		}
+		return null;
 	}
 
 	private Method findMethod(Class<?> cls, String methodname, VariantType[] types) {

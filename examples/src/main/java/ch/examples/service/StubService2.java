@@ -1,7 +1,5 @@
 package ch.examples.service;
 
-import javax.transaction.Transactional;
-
 import org.springframework.stereotype.Service;
 
 import ch.springcloud.lite.core.anno.Remote;
@@ -9,7 +7,6 @@ import ch.springcloud.lite.core.anno.Stub;
 
 @Service
 @Stub("newService2")
-@Transactional
 public class StubService2 implements NewService {
 
 	@Remote("newService2")

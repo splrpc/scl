@@ -2,7 +2,7 @@ package ch.examples;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.transaction.annotation.EnableTransactionManagement;
+import org.springframework.context.ApplicationContext;
 
 import ch.springcloud.lite.core.anno.EnableCloudServer;
 
@@ -12,11 +12,10 @@ import ch.springcloud.lite.core.anno.EnableCloudServer;
  */
 @SpringBootApplication(scanBasePackages = "ch.examples.service")
 @EnableCloudServer
-@EnableTransactionManagement
 public class ServerApp {
 
 	public static void main(String[] args) {
-		SpringApplication.run(ServerApp.class, args);
+		ApplicationContext ctx = SpringApplication.run(ServerApp.class, args);
 	}
 
 }
